@@ -1,4 +1,4 @@
-Multisite Adm
+Multisite Admin Bar Switcher
 ---------------
 
 The Multisite Admin Bar Switcher is a plugin written for WordPress Multi-Site
