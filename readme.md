@@ -7,7 +7,7 @@ that makes switching between sites easier with large numbers of sites.
 This plugin replaces the built in 'sites' drop down with one which breaks the
 sites up by letter.
 
-![](http://s-plugins.wordpress.org/multisite-admin-bar-switcher/assets/screenshot-1.png?rev=669481)
+![](https://raw.github.com/Flynsarmy/wp-multisite-admin-bar-switcher/master/screenshot-1.png)
 
 Installation
 ---------------
