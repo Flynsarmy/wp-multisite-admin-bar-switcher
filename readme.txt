@@ -1,9 +1,9 @@
 === Multisite Admin Bar Switcher ===
 Contributors: flynsarmy
-Tags: multisite, toolbar, switcher, switch, network
+Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 3.5.1
-Stable tag: 1.0.1
+Tested up to: 3.5.2
+Stable tag: 1.0.3
 
 == Description ==
 
@@ -24,6 +24,14 @@ The switcher will now appear on the Admin Menu
 1. Multisite Admin bar Switcher in action
 
 == Changelog ==
+
+= 1.0.3 =
+* MABS now shows for all logged in users.
+* Performance improvements
+* Only applicable blogs show for each user
+
+= 1.0.2 =
+* 'My Sites' admin button now toggles between admin and frontend
 
 = 1.0.1 =
 * Minor readme updates
