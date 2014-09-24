@@ -6,9 +6,7 @@
 	Version: 1.0.4
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
-*/
-?><?php
-/*
+
 	Copyright 2013  Flyn San  (email : flynsarmy@gmail.com)
 
 	This program is free software; you can redistribute it and/or modify
@@ -24,8 +22,90 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-?><?php
+
 add_action('admin_bar_menu', 'mabs', 40);
+function mabs() {
+	// No need to show MABS
+	if ( !is_multisite() || !is_admin_bar_showing() )
+		return;
+
+	global $wp_admin_bar, $wpdb, $current_blog;
+
+	$wp_admin_bar->remove_node('my-sites');
+	$wp_admin_bar->remove_node('site-name');
+
+	$current_user = wp_get_current_user();
+
+	// current site path
+	if ( is_network_admin() )
+	{
+		$blogname = __('Network');
+		$url = get_home_url( $current_blog->blog_id );
+	}
+	elseif ( is_admin() )
+	{
+		$blogname = get_blog_option($current_blog->blog_id, "blogname");
+		$url = get_home_url( $current_blog->blog_id );
+	}
+	else
+	{
+		$blogname = get_blog_option($current_blog->blog_id, "blogname");
+		$url = get_admin_url( $current_blog->blog_id );
+	}
+
+
+	// Add top menu
+	$wp_admin_bar->add_menu(array(
+		'parent' => false,
+		'id' => 'mabs',
+		'title' => __('My Sites') . ': ' . $blogname,
+		'href' => $url,
+	));
+
+	// Add 'Your Site'
+	$url = get_admin_url( $current_blog->blog_id );
+	$wp_admin_bar->add_menu(array(
+		'parent' => 'mabs',
+		'id' => 'mabs_yoursite',
+		'title' =>__('Your Site'),
+		'href' => str_replace('/wp-admin/', '', $url)
+	));
+	mabs_display_blog_pages($current_user, 'yoursite', $url);
+
+	// Add 'Network'
+	if ( current_user_can('manage_network') )
+	{
+		// add network menu
+		$url = network_admin_url();
+		$wp_admin_bar->add_menu(array(
+			'parent' => 'mabs',
+			'id' => 'mabs_network',
+			'title' =>__('Network'),
+			'href' => $url,
+		));
+		mabs_display_blog_pages($current_user, 'network', $url);
+	}
+
+	// Add users' blogs
+	mabs_display_blogs_for_user( $current_user );
+}
+
+add_action( 'wp_enqueue_scripts', 'mabs_enqueue_assets' );
+add_action( 'admin_enqueue_scripts', 'mabs_enqueue_assets' );
+function mabs_enqueue_assets( ) {
+	if ( !is_admin_bar_showing() || !is_user_logged_in() || mabs_site_count_below_minimum(wp_get_current_user()) )
+		return;
+
+	wp_enqueue_script( 'mabs_site_filter', plugins_url( 'assets/js/mabs_site_filter.js', __FILE__ ), array('jquery'), '2014.09.25', true );
+	wp_enqueue_style( 'mabs_site_filter', plugins_url( 'assets/css/mabs_site_filter.css', __FILE__ ) );
+}
+
+function mabs_site_count_below_minimum($user)
+{
+	$blogs = mabs_get_blog_list( $user );
+
+	return sizeof($blogs) < 5;
+}
 
 /**
  * Adds a blogs submenu items to the admin drop down menu.
@@ -93,7 +173,18 @@ function mabs_display_blog_pages( $user, $id, $admin_url )
  */
 function mabs_display_blogs_for_user( $user )
 {
-	global $wp_admin_bar,$wpdb;
+	global $wp_admin_bar, $wpdb;
+
+	if ( !mabs_site_count_below_minimum($user) )
+		$wp_admin_bar->add_menu(array(
+			'parent' => 'mabs',
+			'id'     => 'mabs_site_filter',
+			'title'  => '<label for="mabs_site_filter_text">'. __( 'Filter My Sites', 'mabs' ) .'</label>' .
+						'<input type="text" id="mabs_site_filter_text" placeholder="'. __( 'Search Sites', 'mabs' ) .'" />',
+			'meta'   => array(
+				'class' => 'hide-if-no-js'
+			)
+		));
 
 	$blogs = mabs_get_blog_list( $user );
 
@@ -113,7 +204,10 @@ function mabs_display_blogs_for_user( $user )
 			'parent' => $site_parent,
 			'id' => 'mabs_'.$letter.$i,
 			'title' => $blog->blogname,
-			'href' => $admin_url
+			'href' => $admin_url,
+			'meta' => array(
+				'class' => 'mabs_blog',
+			),
 		));
 
 		//Add site submenu options
@@ -142,7 +236,10 @@ function mabs_display_letters( array $blogs )
 		$wp_admin_bar->add_menu(array(
 			'parent' => 'mabs',
 			'id' => 'mabs_'.$letter.'_letter',
-			'title'=>__($letter)
+			'title' => __($letter),
+			'meta' => array(
+				'class' => 'mabs_letter',
+			),
 		));
 }
 
@@ -185,72 +282,6 @@ function mabs_get_blog_list( $user )
 	ksort($sorted);
 
 	return $sorted;
-}
-
-function mabs() {
-	// No need to show MABS
-	if ( !is_multisite() || !is_admin_bar_showing() )
-		return;
-
-	global $wp_admin_bar, $wpdb, $current_blog;
-
-	$wp_admin_bar->remove_node('my-sites');
-	$wp_admin_bar->remove_node('site-name');
-
-	$current_user = wp_get_current_user();
-
-	// current site path
-	if ( is_network_admin() )
-	{
-		$blogname = __('Network');
-		$url = get_home_url( $current_blog->blog_id );
-	}
-	elseif ( is_admin() )
-	{
-		$blogname = get_blog_option($current_blog->blog_id, "blogname");
-		$url = get_home_url( $current_blog->blog_id );
-	}
-	else
-	{
-		$blogname = get_blog_option($current_blog->blog_id, "blogname");
-		$url = get_admin_url( $current_blog->blog_id );
-	}
-
-
-	// Add top menu
-	$wp_admin_bar->add_menu(array(
-		'parent' => false,
-		'id' => 'mabs',
-		'title' => __('My Sites') . ': ' . $blogname,
-		'href' => $url,
-	));
-
-	// Add 'Your Site'
-	$url = get_admin_url( $current_blog->blog_id );
-	$wp_admin_bar->add_menu(array(
-		'parent' => 'mabs',
-		'id' => 'mabs_yoursite',
-		'title' =>__('Your Site'),
-		'href' => str_replace('/wp-admin/', '', $url)
-	));
-	mabs_display_blog_pages($current_user, 'yoursite', $url);
-
-	// Add 'Network'
-	if ( current_user_can('manage_network') )
-	{
-		// add network menu
-		$url = network_admin_url();
-		$wp_admin_bar->add_menu(array(
-			'parent' => 'mabs',
-			'id' => 'mabs_network',
-			'title' =>__('Network'),
-			'href' => $url,
-		));
-		mabs_display_blog_pages($current_user, 'network', $url);
-	}
-
-	// Add users' blogs
-	mabs_display_blogs_for_user( $current_user );
 }
 
 ?>

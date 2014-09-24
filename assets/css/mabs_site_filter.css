@@ -1,0 +1,21 @@
+#wp-admin-bar-mabs_site_filter.hide-if-no-js {
+	display: none;
+}
+#wp-admin-bar-mabs_site_filter label {
+	clip: rect(1px, 1px, 1px, 1px);
+	position: absolute !important;
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+}
+#wp-admin-bar-mabs_site_filter {
+	height: 38px;
+}
+#wp-admin-bar-mabs_site_filter .ab-item {
+	height: 34px;
+}
+#wp-admin-bar-mabs_site_filter input {
+	padding: 0 2px;
+	width: 95%;
+	width: calc( 100% - 4px );
+}

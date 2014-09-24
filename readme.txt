@@ -25,6 +25,12 @@ The switcher will now appear on the Admin Menu
 
 == Changelog ==
 
+= 1.0.5 =
+
+September 25, 2014
+
+* Added site filter if 10 or more blogs
+
 = 1.0.4 =
 
 April 30, 2014
