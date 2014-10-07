@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.0.4
+	Version: 1.0.8
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -267,21 +267,55 @@ function mabs_get_blog_list( $user )
 {
 	global $mabs_user_blog_list;
 
-	// Cache
+	// Only do this once
 	if ( !isset($mabs_user_blog_list[$user->ID]))
-		$mabs_user_blog_list[$user->ID] = get_blogs_of_user( $user->ID );
+	{
+		if ( user_can($user, 'manage_network') )
+			$unsorted_list = mabs_get_blogs_of_network();
+		else
+			$unsorted_list = get_blogs_of_user( $user->ID );
 
-	$unsorted_list = $mabs_user_blog_list[$user->ID];
-	$sorted = array();
+		$sorted = array();
 
-	// Add blogname to key list. Also add a number so we
-	// are certain keys are unique
-	foreach ( $unsorted_list as $key => $blog )
-		$sorted[ $blog->blogname . $key ] = $blog;
+		// Add blogname to key list. Also add a number so we
+		// are certain keys are unique
+		foreach ( $unsorted_list as $key => $blog )
+			$sorted[ $blog->blogname . $key ] = $blog;
 
-	ksort($sorted);
+		ksort($sorted);
+
+		$mabs_user_blog_list[$user->ID] = $sorted;
+	}
+	else
+		$sorted = $mabs_user_blog_list[$user->ID];
 
 	return $sorted;
+}
+
+function mabs_get_blogs_of_network()
+{
+	// This method returns different info than get_blogs_of_user(). So make it the same
+	$blog_list = wp_get_sites();
+	$unsorted_list = array();
+
+	foreach ( $blog_list as $id => $info )
+	{
+		$userblog_id = intval($info['blog_id']);
+
+		$unsorted_list[$userblog_id] = (object)array(
+			'userblog_id' => $userblog_id,
+			'blogname' => get_blog_option($info['blog_id'], 'blogname'),
+			'domain' => $info['domain'],
+			'path' => $info['path'],
+			'site_id' => $info['site_id'],
+			'siteurl' => get_blog_option($info['blog_id'], 'siteurl'),
+			'archived' => intval($info['archived']),
+			'spam' => intval($info['spam']),
+			'deleted' => intval($info['deleted']),
+		);
+	}
+
+	return $unsorted_list;
 }
 
 ?>
