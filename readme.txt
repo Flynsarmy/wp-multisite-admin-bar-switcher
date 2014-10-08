@@ -3,7 +3,7 @@ Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
 Tested up to: 4.0
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 
 == Description ==
 
@@ -24,6 +24,10 @@ The switcher will now appear on the Admin Menu
 1. Multisite Admin bar Switcher in action
 
 == Changelog ==
+
+= 1.0.9 =
+
+* Disable autocomplete on filter field
 
 = 1.0.8 =
 
