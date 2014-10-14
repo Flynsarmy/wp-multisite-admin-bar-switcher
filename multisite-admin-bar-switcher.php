@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.0.9
+	Version: 1.0.10
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -35,6 +35,7 @@ function mabs() {
 	$wp_admin_bar->remove_node('site-name');
 
 	$current_user = wp_get_current_user();
+	$bloginfo = mabs_convert_blog_fields($current_blog);
 
 	// current site path
 	if ( is_network_admin() )
@@ -52,13 +53,11 @@ function mabs() {
 		$blogname = get_blog_option($current_blog->blog_id, "blogname");
 		$url = get_admin_url( $current_blog->blog_id );
 	}
-
-
 	// Add top menu
 	$wp_admin_bar->add_menu(array(
 		'parent' => false,
 		'id' => 'mabs',
-		'title' => __('My Sites') . ': ' . $blogname,
+		'title' => __('My Sites') . ': ' . apply_filters('mabs_blog_name', $blogname, $bloginfo),
 		'href' => $url,
 	));
 
@@ -121,36 +120,38 @@ function mabs_display_blog_pages( $user, $id, $admin_url )
 	global $wp_admin_bar;
 	if ( $id == 'network' )
 		$pages = array(
-			'dashboard' 	=> array('url' => 'index.php'),
-			'sites' 		=> array('url' => 'sites.php'),
-			'users' 		=> array('url' => 'users.php'),
-			'themes' 		=> array('url' => 'themes.php'),
-			'plugins' 		=> array('url' => 'plugins.php'),
-			'settings' 		=> array('url' => 'settings.php'),
-			'updates' 		=> array('url' => 'update-core.php'),
+			'dashboard'     => array('url' => 'index.php'),
+			'sites'         => array('url' => 'sites.php'),
+			'users'         => array('url' => 'users.php'),
+			'themes'        => array('url' => 'themes.php'),
+			'plugins'       => array('url' => 'plugins.php'),
+			'settings'      => array('url' => 'settings.php'),
+			'updates'       => array('url' => 'update-core.php'),
 		);
 	else
 		$pages = array(
-			'dashboard' 	=> array('url' => 'index.php'),
-			'visit' 		=> array('url' => ''),
-			'posts' 		=> array('url' => 'edit.php', 			'permission' => 'edit_posts'),
-			'media' 		=> array('url' => 'media.php', 			'permission' => 'upload_files'),
-			'links' 		=> array('url' => 'link-manager.php', 	'permission' => 'manage_links'),
-			'pages' 		=> array('url' => 'edit.php?post_type=page', 'permission' => 'edit_pages'),
-			'comments' 		=> array('url' => 'edit-comments.php', 	'permission' => 'edit_posts'),
-			'appearance' 	=> array('url' => 'themes.php', 		'permission' => 'switch_themes'),
-			'plugins' 		=> array('url' => 'plugins.php', 		'permission' => 'install_plugins'),
-			'users' 		=> array('url' => 'users.php', 			'permission' => 'list_users'),
-			'tools' 		=> array('url' => 'tools.php', 			'permission' => 'import'),
-			'settings' 		=> array('url' => 'options-general.php','permission' => 'manage_options'),
+			'dashboard'     => array('url' => 'index.php'),
+			'visit'         => array('url' => ''),
+			'posts'         => array('url' => 'edit.php',           'permission' => 'edit_posts'),
+			'media'         => array('url' => 'media.php',          'permission' => 'upload_files'),
+			'links'         => array('url' => 'link-manager.php',   'permission' => 'manage_links'),
+			'pages'         => array('url' => 'edit.php?post_type=page', 'permission' => 'edit_pages'),
+			'comments'      => array('url' => 'edit-comments.php',  'permission' => 'edit_posts'),
+			'appearance'    => array('url' => 'themes.php',         'permission' => 'switch_themes'),
+			'plugins'       => array('url' => 'plugins.php',        'permission' => 'install_plugins'),
+			'users'         => array('url' => 'users.php',          'permission' => 'list_users'),
+			'tools'         => array('url' => 'tools.php',          'permission' => 'import'),
+			'settings'      => array('url' => 'options-general.php','permission' => 'manage_options'),
 		);
+
+	$pages = apply_filters('mabs_blog_pages', $pages, $id, $user);
 
 	foreach ( $pages as $key => $details )
 	{
 		if ( $key == "visit" )
 			$wp_admin_bar->add_menu(array(
 				'parent' => 'mabs_'.$id,
-				'id' =>'mabs_'.$id.'_visit',
+				'id' =>'mabs_'.$id.'_'.$key,
 				'title'=>__('Visit Site'),
 				'href'=>str_replace('wp-admin/','',$admin_url)
 			));
@@ -158,7 +159,7 @@ function mabs_display_blog_pages( $user, $id, $admin_url )
 			$wp_admin_bar->add_menu(array(
 				'parent' => 'mabs_'.$id,
 				'id' =>'mabs_'.$id.'_'.$key,
-				'title'=>__(ucfirst($key)),
+				'title'=> isset($details['title']) ? $details['title'] : __(ucfirst($key)),
 				'href' => $admin_url.$details['url']
 			));
 	}
@@ -203,7 +204,7 @@ function mabs_display_blogs_for_user( $user )
 		$wp_admin_bar->add_menu(array(
 			'parent' => $site_parent,
 			'id' => 'mabs_'.$letter.$i,
-			'title' => $blog->blogname,
+			'title' => apply_filters('mabs_blog_name', $blog->blogname, $blog),
 			'href' => $admin_url,
 			'meta' => array(
 				'class' => 'mabs_blog',
@@ -301,21 +302,60 @@ function mabs_get_blogs_of_network()
 	foreach ( $blog_list as $id => $info )
 	{
 		$userblog_id = intval($info['blog_id']);
-
-		$unsorted_list[$userblog_id] = (object)array(
-			'userblog_id' => $userblog_id,
-			'blogname' => get_blog_option($info['blog_id'], 'blogname'),
-			'domain' => $info['domain'],
-			'path' => $info['path'],
-			'site_id' => $info['site_id'],
-			'siteurl' => get_blog_option($info['blog_id'], 'siteurl'),
-			'archived' => intval($info['archived']),
-			'spam' => intval($info['spam']),
-			'deleted' => intval($info['deleted']),
-		);
+		$unsorted_list[$userblog_id] = mabs_convert_blog_fields($info);
 	}
 
 	return $unsorted_list;
+}
+
+/**
+ * The wp_get_sites() method returns an array with different fields to
+ * get_blogs_of_user(). This method converts fields in the former to the latter.
+ *
+ * @param  array $fields
+ *           [blog_id] => 1
+ *           [site_id] => 1
+ *           [domain] => myblog.localhost.com
+ *           [path] => /
+ *           [registered] => 2012-04-17 02:42:46
+ *           [last_updated] => 2014-09-24 00:46:15
+ *           [public] => 1
+ *           [archived] => 0
+ *           [mature] => 0
+ *           [spam] => 0
+ *           [deleted] => 0
+ *           [lang_id] => 0
+ *
+ * @return stdClass Object
+ *      (
+ *          [userblog_id] => 1
+ *          [blogname] => My Blog
+ *          [domain] => myblog.localhost.com
+ *          [path] => /
+ *          [site_id] => 1
+ *          [siteurl] => http://myblog.localhost.com
+ *          [archived] => 0
+ *          [spam] => 0
+ *          [deleted] => 0
+ *      )
+ */
+function mabs_convert_blog_fields($fields)
+{
+	// Make sure we're always working with an array
+	$fields = (array)$fields;
+	$userblog_id = intval($fields['blog_id']);
+
+	return (object)array(
+		'userblog_id' => $userblog_id,
+		'blogname' => get_blog_option($fields['blog_id'], 'blogname'),
+		'domain' => $fields['domain'],
+		'path' => $fields['path'],
+		'site_id' => $fields['site_id'],
+		'siteurl' => get_blog_option($fields['blog_id'], 'siteurl'),
+		'archived' => intval($fields['archived']),
+		'spam' => intval($fields['spam']),
+		'deleted' => intval($fields['deleted']),
+	);
 }
 
 ?>

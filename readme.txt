@@ -3,7 +3,7 @@ Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
 Tested up to: 4.0
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 
 == Description ==
 
@@ -23,7 +23,48 @@ The switcher will now appear on the Admin Menu
 
 1. Multisite Admin bar Switcher in action
 
+== Frequently Asked Questions ==
+
+Multisite Admin Bar Switcher supports filters to change the way the site lists look.
+
+`mabs_blog_name` - used to customise the way the blog names look in the site list
+`
+/**
+ * Sets the blog name to show in the sites drop down
+ *
+ * @param  string   $name    Blog name
+ * @param  stdClass $blog    Blog details
+ *
+ * @return string            Blog name
+ */
+add_filter('mabs_blog_name', function($name, $blog) {
+	return sprintf("(%s) %s", $blog->userblog_id, $name);
+}, 10, 2);
+`
+
+`mabs_blog_pages` - used to add or remove subitems from blogs
+`
+/**
+ * Sets the blog items to show under a site
+ *
+ * @param  [type]  $pages   List of blog subitems
+ * @param  int     $site_id Blog ID
+ * @param  WP_User $user    User we're showing the list to
+ *
+ * @return array            List of blog subitems
+ */
+add_filter('mabs_blog_pages', function($pages, $site_id, $user) {
+	return array_merge($pages, array(
+		'products' => array('title' => 'Products', 'url' => 'edit.php?post_type=product', 'permission' => 'edit_products'),
+	));
+}, 10, 3);
+`
+
 == Changelog ==
+
+= 1.0.10 =
+
+* Added mabs_blog_pages, mabs_blog_name filters - See documentation for usage instructions
 
 = 1.0.9 =
 
