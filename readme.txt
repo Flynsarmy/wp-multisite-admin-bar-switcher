@@ -27,7 +27,7 @@ The switcher will now appear on the Admin Menu
 
 Multisite Admin Bar Switcher supports filters to change the way the site lists look.
 
-`mabs_blog_name` - used to customise the way the blog names look in the site list
+**mabs_blog_name** - used to customise the way the blog names look in the site list
 `
 /**
  * Sets the blog name to show in the sites drop down
@@ -42,7 +42,7 @@ add_filter('mabs_blog_name', function($name, $blog) {
 }, 10, 2);
 `
 
-`mabs_blog_pages` - used to add or remove subitems from blogs
+**mabs_blog_pages** - used to add or remove subitems from blogs
 `
 /**
  * Sets the blog items to show under a site
