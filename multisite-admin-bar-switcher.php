@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.0.10
+	Version: 1.0.11
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -196,7 +196,7 @@ function mabs_display_blogs_for_user( $user )
 	$i = 1;
 	foreach ( $blogs as $key => $blog )
 	{
-		$letter = substr($key, 0, 1);
+		$letter = strtoupper(substr($key, 0, 1));
 		$site_parent = "mabs_".$letter."_letter";
 		$admin_url = get_admin_url( $blog->userblog_id );
 
@@ -281,7 +281,7 @@ function mabs_get_blog_list( $user )
 		// Add blogname to key list. Also add a number so we
 		// are certain keys are unique
 		foreach ( $unsorted_list as $key => $blog )
-			$sorted[ $blog->blogname . $key ] = $blog;
+			$sorted[ strtoupper($blog->blogname) . $key ] = $blog;
 
 		ksort($sorted);
 
