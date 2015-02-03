@@ -2,8 +2,8 @@
 Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 4.0
-Stable tag: 1.0.11
+Tested up to: 4.1
+Stable tag: 1.0.12
 
 == Description ==
 
@@ -61,6 +61,10 @@ add_filter('mabs_blog_pages', function($pages, $site_id, $user) {
 `
 
 == Changelog ==
+
+= 1.0.12 =
+
+* 'My Sites' translation fix
 
 = 1.0.11 =
 
