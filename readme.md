@@ -1,6 +1,8 @@
 Multisite Admin Bar Switcher
 ---------------
 
+Require PHP 5.3
+
 The Multisite Admin Bar Switcher is a plugin written for WordPress Multi-Site
 that makes switching between sites easier with large numbers of sites.
 

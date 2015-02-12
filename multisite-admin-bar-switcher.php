@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.0.12
+	Version: 1.1
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -23,8 +23,29 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-add_action('admin_bar_menu', 'mabs', 40);
-function mabs() {
+function mabs_require_with($partial, $data)
+{
+	extract($data);
+	ob_start();
+		require $partial;
+	return ob_get_clean();
+}
+
+// From http://wordpress.stackexchange.com/questions/16474/how-to-add-field-for-new-site-wide-option-on-network-settings-screen
+add_action('network_admin_menu', function() {
+	add_submenu_page('settings.php', 'Multisite Admin Bar Switcher', 'Multisite Admin Bar Switcher', 'manage_network_options', 'mabs-settings', function() {
+		echo mabs_require_with(dirname(__FILE__).'/partials/network-admin/settings.php', array(
+			'options' => get_site_option('mabs'),
+		));
+	});
+});
+
+add_action('wp_ajax_clear_mabs_cache', function() {
+	mabs_clear_cache();
+	exit("Cache cleared.");
+});
+
+add_action('admin_bar_menu', function() {
 	// No need to show MABS
 	if ( !is_multisite() || !is_admin_bar_showing() )
 		return;
@@ -87,7 +108,7 @@ function mabs() {
 
 	// Add users' blogs
 	mabs_display_blogs_for_user( $current_user );
-}
+}, 40);
 
 add_action( 'wp_enqueue_scripts', 'mabs_enqueue_assets' );
 add_action( 'admin_enqueue_scripts', 'mabs_enqueue_assets' );
@@ -98,6 +119,35 @@ function mabs_enqueue_assets( ) {
 	wp_enqueue_script( 'mabs_site_filter', plugins_url( 'assets/js/mabs_site_filter.js', __FILE__ ), array('jquery'), '2014.09.25', true );
 	wp_enqueue_style( 'mabs_site_filter', plugins_url( 'assets/css/mabs_site_filter.css', __FILE__ ) );
 }
+
+add_action( 'wpmu_new_blog', 'mabs_clear_cache');
+add_action( 'wpmu_activate_blog', 'mabs_clear_cache');
+
+add_action('add_user_to_blog', function($user_id) {
+	mabs_clear_user_cache($user_id);
+}, 10, 1);
+add_action('added_existing_user', function($user_id) {
+	mabs_clear_user_cache($user_id);
+}, 10, 1);
+add_action('remove_user_from_blog', function($user_id, $blog_id) {
+	mabs_clear_user_cache($user_id);
+}, 10, 2);
+
+
+function mabs_clear_cache()
+{
+	if ( !is_user_logged_in() )
+		return;
+
+	$user = wp_get_current_user();
+	wp_cache_delete('mabs_bloglist_'.$user->ID, 'mabs');
+}
+function mabs_clear_user_cache($user_id)
+{
+	wp_cache_delete('mabs_bloglist_'.$user_id, 'mabs');
+}
+
+
 
 function mabs_site_count_below_minimum($user)
 {
@@ -176,6 +226,7 @@ function mabs_display_blogs_for_user( $user )
 {
 	global $wp_admin_bar, $wpdb;
 
+	// Add Filter field
 	if ( !mabs_site_count_below_minimum($user) )
 		$wp_admin_bar->add_menu(array(
 			'parent' => 'mabs',
@@ -271,21 +322,32 @@ function mabs_get_blog_list( $user )
 	// Only do this once
 	if ( !isset($mabs_user_blog_list[$user->ID]))
 	{
-		if ( user_can($user, 'manage_network') )
-			$unsorted_list = mabs_get_blogs_of_network();
-		else
-			$unsorted_list = get_blogs_of_user( $user->ID );
+		// Try to retrieve sorted list from cache
+		$cache = wp_cache_get('mabs_bloglist_'.$user->ID, 'mabs');
+		if ( $cache )
+			$sorted = $mabs_user_blog_list[$user->ID] = $cache;
 
-		$sorted = array();
+		if ( empty($mabs_user_blog_list[$user->ID]) )
+		{
+			if ( user_can($user, 'manage_network') )
+				$unsorted_list = mabs_get_blogs_of_network();
+			else
+				$unsorted_list = get_blogs_of_user( $user->ID );
 
-		// Add blogname to key list. Also add a number so we
-		// are certain keys are unique
-		foreach ( $unsorted_list as $key => $blog )
-			$sorted[ strtoupper($blog->blogname) . $key ] = $blog;
+			$sorted = array();
 
-		ksort($sorted);
+			// Add blogname to key list. Also add a number so we
+			// are certain keys are unique
+			foreach ( $unsorted_list as $key => $blog )
+				$sorted[ strtoupper($blog->blogname) . $key ] = $blog;
 
-		$mabs_user_blog_list[$user->ID] = $sorted;
+			ksort($sorted);
+
+			// Cache sorted list for 30 mins
+			wp_cache_set('mabs_bloglist_'.$user->ID, $sorted, 'mabs', apply_filters('mabs_cache_duration', 60*60*30));
+
+			$mabs_user_blog_list[$user->ID] = $sorted;
+		}
 	}
 	else
 		$sorted = $mabs_user_blog_list[$user->ID];
