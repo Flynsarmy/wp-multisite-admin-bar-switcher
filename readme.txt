@@ -2,8 +2,8 @@
 Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 4.1
-Stable tag: 1.1
+Tested up to: 4.2.3
+Stable tag: 1.1.1
 
 == Description ==
 
@@ -63,6 +63,9 @@ add_filter('mabs_blog_pages', function($pages, $site_id, $user) {
 `
 
 == Changelog ==
+
+= 1.1.1 =
+* Cache mabs_get_blogs_of_network function
 
 = 1.1 =
 * Add cache support to speed up admin bar generation

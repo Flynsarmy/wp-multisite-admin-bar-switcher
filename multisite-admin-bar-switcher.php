@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.1
+	Version: 1.1.1
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -139,12 +139,12 @@ function mabs_clear_cache()
 	if ( !is_user_logged_in() )
 		return;
 
-	$user = wp_get_current_user();
-	wp_cache_delete('mabs_bloglist_'.$user->ID, 'mabs');
+	mabs_clear_user_cache(wp_get_current_user()->ID);
 }
 function mabs_clear_user_cache($user_id)
 {
 	wp_cache_delete('mabs_bloglist_'.$user_id, 'mabs');
+	wp_cache_delete('mabs_bloglist_network', 'mabs');
 }
 
 
@@ -357,17 +357,24 @@ function mabs_get_blog_list( $user )
 
 function mabs_get_blogs_of_network()
 {
-	// This method returns different info than get_blogs_of_user(). So make it the same
-	$blog_list = wp_get_sites();
-	$unsorted_list = array();
-
-	foreach ( $blog_list as $id => $info )
+	$cache = wp_cache_get('mabs_bloglist_network', 'mabs');
+	if ( !$cache )
 	{
-		$userblog_id = intval($info['blog_id']);
-		$unsorted_list[$userblog_id] = mabs_convert_blog_fields($info);
+		// This method returns different info than get_blogs_of_user(). So make it the same
+		$blog_list = wp_get_sites();
+		$unsorted_list = array();
+
+		foreach ( $blog_list as $id => $info )
+		{
+			$userblog_id = intval($info['blog_id']);
+			$unsorted_list[$userblog_id] = mabs_convert_blog_fields($info);
+		}
+
+		$cache = $unsorted_list;
+		wp_cache_set('mabs_bloglist_network', $cache, 'mabs', apply_filters('mabs_cache_duration', 60*60*30));
 	}
 
-	return $unsorted_list;
+	return $cache;
 }
 
 /**
