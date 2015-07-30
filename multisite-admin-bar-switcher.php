@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.1.1
+	Version: 1.1.2
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -27,7 +27,7 @@ function mabs_require_with($partial, $data)
 {
 	extract($data);
 	ob_start();
-		require $partial;
+	require $partial;
 	return ob_get_clean();
 }
 
@@ -143,17 +143,28 @@ function mabs_clear_cache()
 }
 function mabs_clear_user_cache($user_id)
 {
-	wp_cache_delete('mabs_bloglist_'.$user_id, 'mabs');
-	wp_cache_delete('mabs_bloglist_network', 'mabs');
+	delete_site_transient('mabs_bloglist_'.$user_id);
+	delete_site_transient('mabs_is_below_min_'.$user_id);
+	delete_site_transient('mabs_bloglist_network');
 }
 
-
-
+/**
+ * @param stdClass $user
+ * @return bool
+ */
 function mabs_site_count_below_minimum($user)
 {
-	$blogs = mabs_get_blog_list( $user );
+	$cache = get_site_transient('mabs_is_below_min_'.$user->ID);
 
-	return sizeof($blogs) < 5;
+	if ( !$cache )
+	{
+		$blogs = mabs_get_blog_list( $user );
+
+		$cache = sizeof($blogs) < 5;
+		set_site_transient('mabs_is_below_min_'.$user->ID, $cache, apply_filters('mabs_cache_duration', 60*60*30));
+	}
+
+	return $cache;
 }
 
 /**
@@ -232,7 +243,7 @@ function mabs_display_blogs_for_user( $user )
 			'parent' => 'mabs',
 			'id'     => 'mabs_site_filter',
 			'title'  => '<label for="mabs_site_filter_text">'. __( 'Filter My Sites', 'mabs' ) .'</label>' .
-						'<input type="text" id="mabs_site_filter_text" autocomplete="off" placeholder="'. __( 'Search Sites', 'mabs' ) .'" />',
+				'<input type="text" id="mabs_site_filter_text" autocomplete="off" placeholder="'. __( 'Search Sites', 'mabs' ) .'" />',
 			'meta'   => array(
 				'class' => 'hide-if-no-js'
 			)
@@ -323,7 +334,7 @@ function mabs_get_blog_list( $user )
 	if ( !isset($mabs_user_blog_list[$user->ID]))
 	{
 		// Try to retrieve sorted list from cache
-		$cache = wp_cache_get('mabs_bloglist_'.$user->ID, 'mabs');
+		$cache = get_site_transient('mabs_bloglist_'.$user->ID);
 		if ( $cache )
 			$sorted = $mabs_user_blog_list[$user->ID] = $cache;
 
@@ -344,7 +355,7 @@ function mabs_get_blog_list( $user )
 			ksort($sorted);
 
 			// Cache sorted list for 30 mins
-			wp_cache_set('mabs_bloglist_'.$user->ID, $sorted, 'mabs', apply_filters('mabs_cache_duration', 60*60*30));
+			set_site_transient('mabs_bloglist_'.$user->ID, $sorted, apply_filters('mabs_cache_duration', 60*60*30));
 
 			$mabs_user_blog_list[$user->ID] = $sorted;
 		}
@@ -357,7 +368,7 @@ function mabs_get_blog_list( $user )
 
 function mabs_get_blogs_of_network()
 {
-	$cache = wp_cache_get('mabs_bloglist_network', 'mabs');
+	$cache = get_site_transient('mabs_bloglist_network');
 	if ( !$cache )
 	{
 		// This method returns different info than get_blogs_of_user(). So make it the same
@@ -371,7 +382,7 @@ function mabs_get_blogs_of_network()
 		}
 
 		$cache = $unsorted_list;
-		wp_cache_set('mabs_bloglist_network', $cache, 'mabs', apply_filters('mabs_cache_duration', 60*60*30));
+		set_site_transient('mabs_bloglist_network', $cache, apply_filters('mabs_cache_duration', 60*60*30));
 	}
 
 	return $cache;
