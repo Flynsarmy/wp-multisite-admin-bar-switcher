@@ -3,7 +3,7 @@ Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
 Tested up to: 4.2.3
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 
 == Description ==
 
@@ -63,6 +63,9 @@ add_filter('mabs_blog_pages', function($pages, $site_id, $user) {
 `
 
 == Changelog ==
+
+= 1.1.3 =
+* Performance improvement: Admin bar menus that we're removing shouldn't ever be loaded in the first place
 
 = 1.1.2 =
 * Switch from wp_cache API to site_transient API so caching happens on both backend and frontend

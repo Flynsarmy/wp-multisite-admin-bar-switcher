@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.1.2
+	Version: 1.1.3
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -22,6 +22,16 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+add_action( 'add_admin_bar_menus', 'mabs_remove_admin_bar_menus');
+function mabs_remove_admin_bar_menus()
+{
+	if ( is_multisite() )
+	{
+		remove_action( 'admin_bar_menu', 'wp_admin_bar_site_menu', 30 );
+		remove_action( 'admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
+	}
+}
 
 function mabs_require_with($partial, $data)
 {
@@ -47,13 +57,13 @@ add_action('wp_ajax_clear_mabs_cache', function() {
 
 add_action('admin_bar_menu', function() {
 	// No need to show MABS
-	if ( !is_multisite() || !is_admin_bar_showing() )
+	if ( !is_multisite() )
 		return;
 
 	global $wp_admin_bar, $wpdb, $current_blog;
 
-	$wp_admin_bar->remove_node('my-sites');
-	$wp_admin_bar->remove_node('site-name');
+	//$wp_admin_bar->remove_node('my-sites');
+	//$wp_admin_bar->remove_node('site-name');
 
 	$current_user = wp_get_current_user();
 	$bloginfo = mabs_convert_blog_fields($current_blog);
