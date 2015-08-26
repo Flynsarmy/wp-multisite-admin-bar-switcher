@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.2
+	Version: 1.2.1
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
