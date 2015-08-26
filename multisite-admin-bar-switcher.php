@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.1.3
+	Version: 1.2
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -22,6 +22,19 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+require_once __DIR__.'/mabs_admin_bar.php';
+
+/**
+ * Filter the admin bar class to instantiate.
+ *
+ * @since 3.1.0
+ *
+ * @param string $wp_admin_bar_class Admin bar class to use. Default 'WP_Admin_Bar'.
+ */
+add_filter( 'wp_admin_bar_class', function($wp_admin_bar_class) {
+	return 'MABS_Admin_Bar';
+});
 
 add_action( 'add_admin_bar_menus', 'mabs_remove_admin_bar_menus');
 function mabs_remove_admin_bar_menus()
@@ -338,6 +351,7 @@ function mabs_display_letters( array $blogs )
 $mabs_user_blog_list = array();
 function mabs_get_blog_list( $user )
 {
+	global $wp_admin_bar;
 	global $mabs_user_blog_list;
 
 	// Only do this once
@@ -353,7 +367,7 @@ function mabs_get_blog_list( $user )
 			if ( user_can($user, 'manage_network') )
 				$unsorted_list = mabs_get_blogs_of_network();
 			else
-				$unsorted_list = get_blogs_of_user( $user->ID );
+				$unsorted_list = mabs_get_blogs_of_user( $user->ID );
 
 			$sorted = array();
 
@@ -374,6 +388,18 @@ function mabs_get_blog_list( $user )
 		$sorted = $mabs_user_blog_list[$user->ID];
 
 	return $sorted;
+}
+
+function mabs_get_blogs_of_user($user_id)
+{
+	$cache = get_site_transient('mabs_user_blogs_'.$user_id);
+	if ( !$cache )
+	{
+		$cache = get_blogs_of_user($user_id);
+		set_site_transient('mabs_user_blogs_'.$user_id, $cache, apply_filters('mabs_cache_duration', 60*60*30));
+	}
+
+	return $cache;
 }
 
 function mabs_get_blogs_of_network()

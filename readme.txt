@@ -2,7 +2,7 @@
 Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 4.2.3
+Tested up to: 4.3
 Stable tag: 1.1.3
 
 == Description ==
@@ -62,7 +62,24 @@ add_filter('mabs_blog_pages', function($pages, $site_id, $user) {
 }, 10, 3);
 `
 
+**mabs_cache_duration** - alter cache time (default 30 minutes)
+`
+/**
+ * Various DB-intensive lookups are cached. Use this filter to alter the cache time.
+ *
+ * @param  int     $cachetime Cache Time (default 30 minutes)
+ *
+ * @return int                Cache time
+ */
+add_filter('mabs_cache_duration', function($cachetime) {
+	return 60*60*30;
+});
+`
+
 == Changelog ==
+
+= 1.2 =
+* Performance improvement: More admin bar methods cached. WP_Admin_Bar has been replaced with MABS_Admin_Bar
 
 = 1.1.3 =
 * Performance improvement: Admin bar menus that we're removing shouldn't ever be loaded in the first place
