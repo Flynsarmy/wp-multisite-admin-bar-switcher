@@ -78,6 +78,9 @@ add_filter('mabs_cache_duration', function($cachetime) {
 
 == Changelog ==
 
+= 1.2.3 =
+* Added mobile menu
+
 = 1.2 =
 * Performance improvement: More admin bar methods cached. WP_Admin_Bar has been replaced with MABS_Admin_Bar
 
