@@ -281,7 +281,7 @@ function mabs_display_blogs_for_user( $user )
 	$i = 1;
 	foreach ( $blogs as $key => $blog )
 	{
-		$letter = strtoupper(substr($key, 0, 1));
+		$letter = mb_strtoupper(mb_substr($key, 0, 1));
 		$site_parent = "mabs_".$letter."_letter";
 		$admin_url = get_admin_url( $blog->userblog_id );
 
@@ -316,7 +316,7 @@ function mabs_display_letters( array $blogs )
 
 	$letters = array();
 	foreach ( $blogs as $key => $blog )
-		$letters[ strtoupper(substr($key, 0, 1)) ] = '';
+		$letters[ mb_strtoupper(mb_substr($key, 0, 1)) ] = '';
 
 	foreach ( array_keys($letters) as $letter )
 		$wp_admin_bar->add_menu(array(
