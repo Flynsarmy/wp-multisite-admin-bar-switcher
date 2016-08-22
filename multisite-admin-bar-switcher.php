@@ -3,7 +3,7 @@
 	Plugin Name: Multisite Admin bar Switcher
 	Plugin URI: http://www.flynsarmy.com
 	Description: Replaces the built in 'My Sites' drop down with a better layed out one
-	Version: 1.2.3
+	Version: 1.2.4
 	Author: Flyn San
 	Author URI: http://www.flynsarmy.com/
 
@@ -127,7 +127,7 @@ add_action('admin_bar_menu', function() {
 			'href' => $url,
 		));
 		mabs_display_blog_pages($current_user, 'network', $url);
-	}
+	}	
 
 	// Add users' blogs
 	mabs_display_blogs_for_user( $current_user );
@@ -199,7 +199,7 @@ function mabs_site_count_below_minimum($user)
  *
  * @return void
  */
-function mabs_display_blog_pages( $user, $id, $admin_url )
+function mabs_display_blog_pages( $user, $id, $admin_url, $external_site )
 {
 	global $wp_admin_bar;
 	if ( $id == 'network' )
@@ -237,14 +237,20 @@ function mabs_display_blog_pages( $user, $id, $admin_url )
 				'parent' => 'mabs_'.$id,
 				'id' =>'mabs_'.$id.'_'.$key,
 				'title'=>__('Visit Site'),
-				'href'=>str_replace('wp-admin/','',$admin_url)
+				'href'=>str_replace('wp-admin/','',$admin_url),
+				'meta' => array(
+					'target' => $external_site ? '_blank' : '',
+				),				
 			));
 		elseif ( empty($details['permission']) || user_can($user->ID, $details['permission']) )
 			$wp_admin_bar->add_menu(array(
 				'parent' => 'mabs_'.$id,
 				'id' =>'mabs_'.$id.'_'.$key,
 				'title'=> isset($details['title']) ? $details['title'] : __(ucfirst($key)),
-				'href' => $admin_url.$details['url']
+				'href' => $admin_url.$details['url'],
+				'meta' => array(
+					'target' => $external_site ? '_blank' : '',
+				),					
 			));
 	}
 }
@@ -283,21 +289,22 @@ function mabs_display_blogs_for_user( $user )
 	{
 		$letter = mb_strtoupper(mb_substr($key, 0, 1));
 		$site_parent = "mabs_".$letter."_letter";
-		$admin_url = get_admin_url( $blog->userblog_id );
+		$admin_url = $blog->external_site ? $blog->adminurl : get_admin_url( $blog->userblog_id );
 
 		//Add the site
 		$wp_admin_bar->add_menu(array(
 			'parent' => $site_parent,
 			'id' => 'mabs_'.$letter.$i,
 			'title' => apply_filters('mabs_blog_name', $blog->blogname, $blog),
-			'href' => $admin_url,
+			'href' => $blog->external_site == 'network' ? $admin_url . '/network/' : $admin_url,
 			'meta' => array(
 				'class' => 'mabs_blog',
+				'target' => $blog->external_site ? '_blank' : '',
 			),
 		));
 
 		//Add site submenu options
-		mabs_display_blog_pages($user, $letter.$i, $admin_url);
+		mabs_display_blog_pages($user, $letter.$i, $admin_url, $blog->external_site);
 
 		$i++;
 	}
@@ -368,6 +375,8 @@ function mabs_get_blog_list( $user )
 				$unsorted_list = mabs_get_blogs_of_network();
 			else
 				$unsorted_list = mabs_get_blogs_of_user( $user->ID );
+
+			$unsorted_list = apply_filters('mabs_unsorted_sites_list', $unsorted_list);			
 
 			$sorted = array();
 
