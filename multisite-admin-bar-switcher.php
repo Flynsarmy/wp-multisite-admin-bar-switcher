@@ -298,7 +298,7 @@ function mabs_display_blogs_for_user( $user )
 			'parent' => $site_parent,
 			'id' => 'mabs_'.$letter.$i,
 			'title' => apply_filters('mabs_blog_name', $blog->blogname, $blog),
-			'href' => $blog->external_site == 'network' ? $admin_url . '/network/' : $admin_url,
+			'href' => $blog->external_site == 'network' ? $admin_url . 'network/' : $admin_url,
 			'meta' => array(
 				'class' => 'mabs_blog',
 				'target' => $blog->external_site ? '_blank' : '',
