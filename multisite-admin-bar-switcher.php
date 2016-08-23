@@ -127,7 +127,9 @@ add_action('admin_bar_menu', function() {
 			'href' => $url,
 		));
 		mabs_display_blog_pages($current_user, 'network', $url);
-	}	
+	}
+
+	do_action ('mabs_top_level_menus');
 
 	// Add users' blogs
 	mabs_display_blogs_for_user( $current_user );
@@ -199,7 +201,7 @@ function mabs_site_count_below_minimum($user)
  *
  * @return void
  */
-function mabs_display_blog_pages( $user, $id, $admin_url, $external_site )
+function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
 {
 	global $wp_admin_bar;
 	if ( $id == 'network' )
@@ -228,7 +230,7 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $external_site )
 			'settings'      => array('url' => 'options-general.php','permission' => 'manage_options'),
 		);
 
-	$pages = apply_filters('mabs_blog_pages', $pages, $id, $user);
+	$pages = apply_filters('mabs_blog_pages', $pages, $id, $user, $blog);
 
 	foreach ( $pages as $key => $details )
 	{
@@ -239,7 +241,7 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $external_site )
 				'title'=>__('Visit Site'),
 				'href'=>str_replace('wp-admin/','',$admin_url),
 				'meta' => array(
-					'target' => $external_site ? '_blank' : '',
+					'target' => $blog->external_site ? '_blank' : '',
 				),				
 			));
 		elseif ( empty($details['permission']) || user_can($user->ID, $details['permission']) )
@@ -247,9 +249,9 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $external_site )
 				'parent' => 'mabs_'.$id,
 				'id' =>'mabs_'.$id.'_'.$key,
 				'title'=> isset($details['title']) ? $details['title'] : __(ucfirst($key)),
-				'href' => $admin_url.$details['url'],
+				'href' => strpos($details['url'], 'http') !== false ? $details['url'] : $admin_url.$details['url'],
 				'meta' => array(
-					'target' => $external_site ? '_blank' : '',
+					'target' => $blog->external_site ? '_blank' : '',
 				),					
 			));
 	}
@@ -304,7 +306,7 @@ function mabs_display_blogs_for_user( $user )
 		));
 
 		//Add site submenu options
-		mabs_display_blog_pages($user, $letter.$i, $admin_url, $blog->external_site);
+		mabs_display_blog_pages($user, $letter.$i, $admin_url, $blog);
 
 		$i++;
 	}
