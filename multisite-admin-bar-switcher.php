@@ -113,7 +113,7 @@ add_action('admin_bar_menu', function() {
 		'title' =>__('Your Site'),
 		'href' => str_replace('/wp-admin/', '', $url)
 	));
-	mabs_display_blog_pages($current_user, 'yoursite', $url);
+	mabs_display_blog_pages($current_user, 'yoursite', $url, $current_blog);
 
 	// Add 'Network'
 	if ( current_user_can('manage_network') )
@@ -126,7 +126,7 @@ add_action('admin_bar_menu', function() {
 			'title' =>__('Network'),
 			'href' => $url,
 		));
-		mabs_display_blog_pages($current_user, 'network', $url);
+		mabs_display_blog_pages($current_user, 'network', $url, $current_blog);
 	}
 
 	do_action ('mabs_top_level_menus');
@@ -195,9 +195,10 @@ function mabs_site_count_below_minimum($user)
 /**
  * Adds a blogs submenu items to the admin drop down menu.
  *
- * @param  string $blog_type 'site' or 'network'
- * @param  integer $id   site ID
- * @param  string $url  '<url>/wp-admin/'
+ * @param  stdClass $user A wordpress user
+ * @param  integer  $id   site ID
+ * @param  string   $url  '<url>/wp-admin/'
+ * @param  stdClass $blog A wordpress blog site
  *
  * @return void
  */
@@ -241,8 +242,8 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
 				'title'=>__('Visit Site'),
 				'href'=>str_replace('wp-admin/','',$admin_url),
 				'meta' => array(
-					'target' => $blog->external_site ? '_blank' : '',
-				),				
+					'target' => !empty($blog->external_site) ? '_blank' : '',
+				),
 			));
 		elseif ( empty($details['permission']) || user_can($user->ID, $details['permission']) )
 			$wp_admin_bar->add_menu(array(
@@ -251,8 +252,8 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
 				'title'=> isset($details['title']) ? $details['title'] : __(ucfirst($key)),
 				'href' => strpos($details['url'], 'http') !== false ? $details['url'] : $admin_url.$details['url'],
 				'meta' => array(
-					'target' => $blog->external_site ? '_blank' : '',
-				),					
+					'target' => !empty($blog->external_site) ? '_blank' : '',
+				),
 			));
 	}
 }
@@ -291,17 +292,17 @@ function mabs_display_blogs_for_user( $user )
 	{
 		$letter = mb_strtoupper(mb_substr($key, 0, 1));
 		$site_parent = "mabs_".$letter."_letter";
-		$admin_url = $blog->external_site ? $blog->adminurl : get_admin_url( $blog->userblog_id );
+		$admin_url = !empty($blog->external_site) ? $blog->adminurl : get_admin_url( $blog->userblog_id );
 
 		//Add the site
 		$wp_admin_bar->add_menu(array(
 			'parent' => $site_parent,
 			'id' => 'mabs_'.$letter.$i,
 			'title' => apply_filters('mabs_blog_name', $blog->blogname, $blog),
-			'href' => $blog->external_site == 'network' ? $admin_url . 'network/' : $admin_url,
+			'href' => !empty($blog->external_site) && $blog->external_site == 'network' ? ($admin_url . 'network/') : $admin_url,
 			'meta' => array(
 				'class' => 'mabs_blog',
-				'target' => $blog->external_site ? '_blank' : '',
+				'target' => !empty($blog->external_site) ? '_blank' : '',
 			),
 		));
 
@@ -378,7 +379,7 @@ function mabs_get_blog_list( $user )
 			else
 				$unsorted_list = mabs_get_blogs_of_user( $user->ID );
 
-			$unsorted_list = apply_filters('mabs_unsorted_sites_list', $unsorted_list);			
+			$unsorted_list = apply_filters('mabs_unsorted_sites_list', $unsorted_list);
 
 			$sorted = array();
 
