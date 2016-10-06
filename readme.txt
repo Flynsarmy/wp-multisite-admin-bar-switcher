@@ -2,8 +2,8 @@
 Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 4.3.1
-Stable tag: 1.2.4
+Tested up to: 4.6
+Stable tag: 1.2.5
 
 == Description ==
 
@@ -77,6 +77,9 @@ add_filter('mabs_cache_duration', function($cachetime) {
 `
 
 == Changelog ==
+
+= 1.2.5 =
+* wp_get_sites() deprecation fix
 
 = 1.2.3 =
 * Added mobile menu
