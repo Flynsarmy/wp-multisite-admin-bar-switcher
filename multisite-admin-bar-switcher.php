@@ -3,7 +3,7 @@
     Plugin Name: Multisite Admin bar Switcher
     Plugin URI: http://www.flynsarmy.com
     Description: Replaces the built in 'My Sites' drop down with a better layed out one
-    Version: 1.2.5
+    Version: 1.2.6
     Author: Flyn San
     Author URI: http://www.flynsarmy.com/
 
@@ -420,7 +420,8 @@ function mabs_get_blogs_of_network()
     if ( !$cache )
     {
         // This method returns different info than get_blogs_of_user(). So make it the same
-        $blog_list = get_sites();
+        $args = array( 'number' => 250 ); // Change number to show more sites (WordPress default is 100)
+        $blog_list = get_sites( $args );
         $unsorted_list = array();
 
         foreach ( $blog_list as $id => $info )
