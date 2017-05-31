@@ -420,7 +420,7 @@ function mabs_get_blogs_of_network()
     if ( !$cache )
     {
         // This method returns different info than get_blogs_of_user(). So make it the same
-        $blog_list = get_sites();
+        $blog_list = get_sites(array('number'=>9999));
         $unsorted_list = array();
 
         foreach ( $blog_list as $id => $info )
