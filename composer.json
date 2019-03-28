@@ -1,0 +1,11 @@
+{
+    "name": "flynsarmy/multisite-admin-bar-switcher",
+    "type": "wordpress-plugin",
+    "authors": [
+        {
+            "name": "flynsarmy",
+            "email": "flynsarmy@gmail.com"
+        }
+    ],
+    "require": {}
+}

@@ -3,7 +3,7 @@
     Plugin Name: Multisite Admin bar Switcher
     Plugin URI: http://www.flynsarmy.com
     Description: Replaces the built in 'My Sites' drop down with a better layed out one
-    Version: 1.2.5
+    Version: 1.3.0
     Author: Flyn San
     Author URI: http://www.flynsarmy.com/
 
@@ -36,15 +36,13 @@ add_filter( 'wp_admin_bar_class', function($wp_admin_bar_class) {
     return 'MABS_Admin_Bar';
 });
 
-add_action( 'add_admin_bar_menus', 'mabs_remove_admin_bar_menus');
-function mabs_remove_admin_bar_menus()
-{
+add_action( 'add_admin_bar_menus', function() {
     if ( is_multisite() )
     {
         remove_action( 'admin_bar_menu', 'wp_admin_bar_site_menu', 30 );
         remove_action( 'admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
     }
-}
+});
 
 function mabs_require_with($partial, $data)
 {
@@ -170,6 +168,7 @@ function mabs_clear_user_cache($user_id)
 {
     delete_site_transient('mabs_bloglist_'.$user_id);
     delete_site_transient('mabs_is_below_min_'.$user_id);
+    delete_site_transient('mabs_admin_urls');
     delete_site_transient('mabs_bloglist_network');
 }
 
@@ -258,6 +257,22 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
     }
 }
 
+function mabs_get_admin_url( $userblog_id )
+{
+    $cache = get_site_transient('mabs_admin_urls');
+
+    if ( !is_array($cache) )
+        $cache = [];
+
+    if (  !isset($cache[$userblog_id]) )
+    {
+        $cache[$userblog_id] = get_admin_url($userblog_id);
+        set_site_transient('mabs_admin_urls', $cache, apply_filters('mabs_cache_duration', 60*60*30));
+    }
+
+    return $cache[$userblog_id];
+}
+
 /**
  * Add the blog list under their respective letters
  *
@@ -292,7 +307,7 @@ function mabs_display_blogs_for_user( $user )
     {
         $letter = mb_strtoupper(mb_substr($key, 0, 1));
         $site_parent = "mabs_".$letter."_letter";
-        $admin_url = !empty($blog->external_site) ? $blog->adminurl : get_admin_url( $blog->userblog_id );
+        $admin_url = !empty($blog->external_site) ? $blog->adminurl : mabs_get_admin_url( $blog->userblog_id );
 
         //Add the site
         $wp_admin_bar->add_menu(array(
@@ -414,6 +429,20 @@ function mabs_get_blogs_of_user($user_id)
     return $cache;
 }
 
+/**
+ * @return array of stdClass
+ *      (
+ *          [userblog_id] => 1
+ *          [blogname] => My Blog
+ *          [domain] => myblog.localhost.com
+ *          [path] => /
+ *          [site_id] => 1
+ *          [siteurl] => http://myblog.localhost.com
+ *          [archived] => 0
+ *          [spam] => 0
+ *          [deleted] => 0
+ *      )
+ */
 function mabs_get_blogs_of_network()
 {
     $cache = get_site_transient('mabs_bloglist_network');
