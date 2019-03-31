@@ -3,7 +3,7 @@ Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
 Tested up to: 5.1.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 
 == Description ==
 
@@ -77,6 +77,9 @@ add_filter('mabs_cache_duration', function($cachetime) {
 `
 
 == Changelog ==
+
+= 1.3.1 =
+* Remove some redundant database calls
 
 = 1.3.0 =
 * Cache admin URLs to avoid hitting the DB

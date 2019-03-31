@@ -6,6 +6,8 @@ require_once ABSPATH.WPINC.'/class-wp-admin-bar.php';
 
 class MABS_Admin_Bar extends WP_Admin_Bar
 {
+    protected $active_blog_for_user_cache = [];
+
     /**
      * This is the same as WP_Admin_Bar's initialize method but
      * $this->user->blogs serves our cached copy of user blogs for
@@ -75,23 +77,22 @@ class MABS_Admin_Bar extends WP_Admin_Bar
      * @global wpdb $wpdb
      *
      * @param int $user_id The unique ID of the user
-     * @return object|void The blog object
+     * @return object|array The blog object
      */
     function mabs_get_active_blog_for_user( $user_id ) {
-        $cache = get_site_transient('mabs_activeblog_'.$user_id);
-        if ($cache)
-            return $cache;
+        if ($this->active_blog_for_user_cache)
+            return $this->active_blog_for_user_cache;
 
         global $wpdb;
         $blogs = mabs_get_blogs_of_user( $user_id );
         if ( empty( $blogs ) )
-            return;
+            return [];
 
         if ( !is_multisite() )
         {
-            $cache = $blogs[$wpdb->blogid];
-            set_site_transient('mabs_activeblog_'.$user_id, $cache, apply_filters('mabs_cache_duration', 60*60*30));
-            return $cache;
+            $this->active_blog_for_user_cache = $blogs[$wpdb->blogid];
+            set_site_transient('mabs_activeblog_'.$user_id, $this->active_blog_for_user_cache, apply_filters('mabs_cache_duration', 60*60*30));
+            return $this->active_blog_for_user_cache;
         }
 
         $primary_blog = get_user_meta( $user_id, 'primary_blog', true );
@@ -128,15 +129,15 @@ class MABS_Admin_Bar extends WP_Admin_Bar
                     }
                 }
             } else {
-                return;
+                return [];
             }
-            $cache = $ret;
-            set_site_transient('mabs_activeblog_'.$user_id, $cache, apply_filters('mabs_cache_duration', 60*60*30));
-            return $cache;
+            $this->active_blog_for_user_cache = $ret;
+
         } else {
-            $cache = $primary;
-            set_site_transient('mabs_activeblog_'.$user_id, $cache, apply_filters('mabs_cache_duration', 60*60*30));
-            return $cache;
+            $this->active_blog_for_user_cache = $primary;
         }
+
+        set_site_transient('mabs_activeblog_'.$user_id, $this->active_blog_for_user_cache, apply_filters('mabs_cache_duration', 60*60*30));
+        return $this->active_blog_for_user_cache;
     }
 }
