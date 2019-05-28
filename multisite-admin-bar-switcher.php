@@ -162,7 +162,12 @@ function mabs_clear_cache()
     if ( !is_user_logged_in() )
         return;
 
-    mabs_clear_user_cache(wp_get_current_user()->ID);
+    global $wpdb;
+
+    $wpdb->query("
+        DELETE FROM ".$wpdb->base_prefix."sitemeta 
+        WHERE meta_key LIKE '_site_transient_mabs_%'; 
+    ");
 }
 function mabs_clear_user_cache($user_id)
 {
