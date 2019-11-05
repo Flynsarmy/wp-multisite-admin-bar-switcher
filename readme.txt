@@ -2,8 +2,8 @@
 Contributors: flynsarmy
 Tags: multisite, toolbar, switcher, switch, network, admin, wpmu
 Requires at least: 3.2.1
-Tested up to: 5.2.1
-Stable tag: 1.3.3
+Tested up to: 5.2.4
+Stable tag: 1.3.4
 
 == Description ==
 
