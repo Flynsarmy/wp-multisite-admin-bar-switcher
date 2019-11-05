@@ -78,6 +78,9 @@ add_filter('mabs_cache_duration', function($cachetime) {
 
 == Changelog ==
 
+= 1.3.4 =
+* Don't allow spaces in IDs
+
 = 1.3.3 =
 * Fix version mismatch
 
