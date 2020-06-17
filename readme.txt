@@ -78,6 +78,11 @@ add_filter('mabs_cache_duration', function($cachetime) {
 
 == Changelog ==
 
+= 1.4.0 =
+* 2020-06-18
+* PSR-2
+* Removed unused 'user' argument in 'mabs_blog_pages' filter
+
 = 1.3.4 =
 * Don't allow spaces in IDs
 

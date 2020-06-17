@@ -3,7 +3,7 @@
     Plugin Name: Multisite Admin bar Switcher
     Plugin URI: http://www.flynsarmy.com
     Description: Replaces the built in 'My Sites' drop down with a better layed out one
-    Version: 1.3.4
+    Version: 1.4.0
     Author: Flyn San
     Author URI: http://www.flynsarmy.com/
 
@@ -32,15 +32,14 @@ require_once __DIR__.'/mabs_admin_bar.php';
  *
  * @param string $wp_admin_bar_class Admin bar class to use. Default 'WP_Admin_Bar'.
  */
-add_filter( 'wp_admin_bar_class', function($wp_admin_bar_class) {
+add_filter('wp_admin_bar_class', function ($wp_admin_bar_class) {
     return 'MABS_Admin_Bar';
 });
 
-add_action( 'add_admin_bar_menus', function() {
-    if ( is_multisite() )
-    {
-        remove_action( 'admin_bar_menu', 'wp_admin_bar_site_menu', 30 );
-        remove_action( 'admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20 );
+add_action('add_admin_bar_menus', function () {
+    if (is_multisite()) {
+        remove_action('admin_bar_menu', 'wp_admin_bar_site_menu', 30);
+        remove_action('admin_bar_menu', 'wp_admin_bar_my_sites_menu', 20);
     }
 });
 
@@ -53,23 +52,31 @@ function mabs_require_with($partial, $data)
 }
 
 // From http://wordpress.stackexchange.com/questions/16474/how-to-add-field-for-new-site-wide-option-on-network-settings-screen
-add_action('network_admin_menu', function() {
-    add_submenu_page('settings.php', 'Multisite Admin Bar Switcher', 'Multisite Admin Bar Switcher', 'manage_network_options', 'mabs-settings', function() {
-        echo mabs_require_with(dirname(__FILE__).'/partials/network-admin/settings.php', array(
-            'options' => get_site_option('mabs'),
-        ));
-    });
+add_action('network_admin_menu', function () {
+    add_submenu_page(
+        'settings.php',
+        'Multisite Admin Bar Switcher',
+        'Multisite Admin Bar Switcher',
+        'manage_network_options',
+        'mabs-settings',
+        function () {
+            echo mabs_require_with(dirname(__FILE__).'/partials/network-admin/settings.php', array(
+                'options' => get_site_option('mabs'),
+            ));
+        }
+    );
 });
 
-add_action('wp_ajax_clear_mabs_cache', function() {
+add_action('wp_ajax_clear_mabs_cache', function () {
     mabs_clear_cache();
     exit("Cache cleared.");
 });
 
-add_action('admin_bar_menu', function() {
+add_action('admin_bar_menu', function () {
     // No need to show MABS
-    if ( !is_multisite() )
+    if (!is_multisite()) {
         return;
+    }
 
     global $wp_admin_bar, $wpdb, $current_blog;
 
@@ -80,20 +87,15 @@ add_action('admin_bar_menu', function() {
     $bloginfo = mabs_convert_blog_fields($current_blog);
 
     // current site path
-    if ( is_network_admin() )
-    {
+    if (is_network_admin()) {
         $blogname = __('Network');
-        $url = get_home_url( $current_blog->blog_id );
-    }
-    elseif ( is_admin() )
-    {
+        $url = get_home_url($current_blog->blog_id);
+    } elseif (is_admin()) {
         $blogname = get_blog_option($current_blog->blog_id, "blogname");
-        $url = get_home_url( $current_blog->blog_id );
-    }
-    else
-    {
+        $url = get_home_url($current_blog->blog_id);
+    } else {
         $blogname = get_blog_option($current_blog->blog_id, "blogname");
-        $url = get_admin_url( $current_blog->blog_id );
+        $url = get_admin_url($current_blog->blog_id);
     }
     // Add top menu
     $wp_admin_bar->add_menu(array(
@@ -104,7 +106,7 @@ add_action('admin_bar_menu', function() {
     ));
 
     // Add 'Your Site'
-    $url = get_admin_url( $current_blog->blog_id );
+    $url = get_admin_url($current_blog->blog_id);
     $wp_admin_bar->add_menu(array(
         'parent' => 'mabs',
         'id' => 'mabs_yoursite',
@@ -114,8 +116,7 @@ add_action('admin_bar_menu', function() {
     mabs_display_blog_pages($current_user, 'yoursite', $url, $current_blog);
 
     // Add 'Network'
-    if ( current_user_can('manage_network') )
-    {
+    if (current_user_can('manage_network')) {
         // add network menu
         $url = network_admin_url();
         $wp_admin_bar->add_menu(array(
@@ -127,40 +128,52 @@ add_action('admin_bar_menu', function() {
         mabs_display_blog_pages($current_user, 'network', $url, $current_blog);
     }
 
-    do_action ('mabs_top_level_menus');
+    do_action('mabs_top_level_menus');
 
     // Add users' blogs
-    mabs_display_blogs_for_user( $current_user );
+    mabs_display_blogs_for_user($current_user);
 }, 40);
 
-add_action( 'wp_enqueue_scripts', 'mabs_enqueue_assets' );
-add_action( 'admin_enqueue_scripts', 'mabs_enqueue_assets' );
-function mabs_enqueue_assets( ) {
-    if ( !is_admin_bar_showing() || !is_user_logged_in() || mabs_site_count_below_minimum(wp_get_current_user()) )
+add_action('wp_enqueue_scripts', 'mabs_enqueue_assets');
+add_action('admin_enqueue_scripts', 'mabs_enqueue_assets');
+function mabs_enqueue_assets()
+{
+    if (!is_admin_bar_showing() || !is_user_logged_in() || mabs_site_count_below_minimum(wp_get_current_user())) {
         return;
+    }
 
-    wp_enqueue_style( 'mabs_styles', plugins_url( 'assets/css/mabs_styles.css', __FILE__ ) );
-    wp_enqueue_script( 'mabs_site_filter', plugins_url( 'assets/js/mabs_site_filter.js', __FILE__ ), array('jquery'), '2014.09.25', true );
+    wp_enqueue_style(
+        'mabs_styles',
+        plugins_url('assets/css/mabs_styles.css', __FILE__)
+    );
+    wp_enqueue_script(
+        'mabs_site_filter',
+        plugins_url('assets/js/mabs_site_filter.js', __FILE__),
+        ['jquery'],
+        '2014.09.25',
+        true
+    );
 }
 
-add_action( 'wpmu_new_blog', 'mabs_clear_cache');
-add_action( 'wpmu_activate_blog', 'mabs_clear_cache');
+add_action('wpmu_new_blog', 'mabs_clear_cache');
+add_action('wpmu_activate_blog', 'mabs_clear_cache');
 
-add_action('add_user_to_blog', function($user_id) {
+add_action('add_user_to_blog', function ($user_id) {
     mabs_clear_user_cache($user_id);
 }, 10, 1);
-add_action('added_existing_user', function($user_id) {
+add_action('added_existing_user', function ($user_id) {
     mabs_clear_user_cache($user_id);
 }, 10, 1);
-add_action('remove_user_from_blog', function($user_id, $blog_id) {
+add_action('remove_user_from_blog', function ($user_id, $blog_id) {
     mabs_clear_user_cache($user_id);
 }, 10, 2);
 
 
 function mabs_clear_cache()
 {
-    if ( !is_user_logged_in() )
+    if (!is_user_logged_in()) {
         return;
+    }
 
     global $wpdb;
 
@@ -185,9 +198,8 @@ function mabs_site_count_below_minimum($user)
 {
     $cache = get_site_transient('mabs_site_count_'.$user->ID);
 
-    if ( !$cache )
-    {
-        $blogs = mabs_get_blog_list( $user );
+    if (!$cache) {
+        $blogs = mabs_get_blog_list($user);
 
         $cache = sizeof($blogs);
         set_site_transient('mabs_site_count_'.$user->ID, $cache, apply_filters('mabs_cache_duration', 60*60*30));
@@ -206,10 +218,10 @@ function mabs_site_count_below_minimum($user)
  *
  * @return void
  */
-function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
+function mabs_display_blog_pages($user, $id, $admin_url, $blog)
 {
     global $wp_admin_bar;
-    if ( $id == 'network' )
+    if ($id == 'network') {
         $pages = array(
             'dashboard'     => array('url' => 'index.php'),
             'sites'         => array('url' => 'sites.php'),
@@ -219,7 +231,7 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
             'settings'      => array('url' => 'settings.php'),
             'updates'       => array('url' => 'update-core.php'),
         );
-    else
+    } else {
         $pages = array(
             'dashboard'     => array('url' => 'index.php'),
             'visit'         => array('url' => ''),
@@ -234,22 +246,22 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
             'tools'         => array('url' => 'tools.php',          'permission' => 'import'),
             'settings'      => array('url' => 'options-general.php','permission' => 'manage_options'),
         );
+    }
 
-    $pages = apply_filters('mabs_blog_pages', $pages, $id, $user, $blog);
+    $pages = apply_filters('mabs_blog_pages', $pages, $id, $blog);
 
-    foreach ( $pages as $key => $details )
-    {
-        if ( $key == "visit" )
+    foreach ($pages as $key => $details) {
+        if ($key == "visit") {
             $wp_admin_bar->add_menu(array(
                 'parent' => 'mabs_'.$id,
                 'id' =>'mabs_'.$id.'_'.$key,
                 'title'=>__('Visit Site'),
-                'href'=>str_replace('wp-admin/','',$admin_url),
+                'href'=>str_replace('wp-admin/', '', $admin_url),
                 'meta' => array(
                     'target' => !empty($blog->external_site) ? '_blank' : '',
                 ),
             ));
-        elseif ( empty($details['permission']) || user_can($user->ID, $details['permission']) )
+        } elseif (empty($details['permission']) || user_can($user->ID, $details['permission'])) {
             $wp_admin_bar->add_menu(array(
                 'parent' => 'mabs_'.$id,
                 'id' =>str_replace(' ', '_', 'mabs_'.$id.'_'.$key),
@@ -259,18 +271,19 @@ function mabs_display_blog_pages( $user, $id, $admin_url, $blog )
                     'target' => !empty($blog->external_site) ? '_blank' : '',
                 ),
             ));
+        }
     }
 }
 
-function mabs_get_admin_url( $userblog_id )
+function mabs_get_admin_url($userblog_id)
 {
     $cache = get_site_transient('mabs_admin_urls');
 
-    if ( !is_array($cache) )
+    if (!is_array($cache)) {
         $cache = [];
+    }
 
-    if (  !isset($cache[$userblog_id]) )
-    {
+    if (!isset($cache[$userblog_id])) {
         $cache[$userblog_id] = get_admin_url($userblog_id);
         set_site_transient('mabs_admin_urls', $cache, apply_filters('mabs_cache_duration', 60*60*30));
     }
@@ -285,41 +298,46 @@ function mabs_get_admin_url( $userblog_id )
  *
  * @return void
  */
-function mabs_display_blogs_for_user( $user )
+function mabs_display_blogs_for_user($user)
 {
     global $wp_admin_bar, $wpdb;
 
     // Add Filter field
-    if ( !mabs_site_count_below_minimum($user) )
+    if (!mabs_site_count_below_minimum($user)) {
         $wp_admin_bar->add_menu(array(
             'parent' => 'mabs',
             'id'     => 'mabs_site_filter',
-            'title'  => '<label for="mabs_site_filter_text">'. __( 'Filter My Sites', 'mabs' ) .'</label>' .
-                '<input type="text" id="mabs_site_filter_text" autocomplete="off" placeholder="'. __( 'Search Sites', 'mabs' ) .'" />',
+            'title'  => '<label for="mabs_site_filter_text">'. __('Filter My Sites', 'mabs') .'</label>' .
+                '<input type="text" id="mabs_site_filter_text" autocomplete="off" placeholder="'.
+                __('Search Sites', 'mabs') .
+                '" />',
             'meta'   => array(
                 'class' => 'hide-if-no-js'
             )
         ));
+    }
 
-    $blogs = mabs_get_blog_list( $user );
+    $blogs = mabs_get_blog_list($user);
 
     //Add letter submenus
-    mabs_display_letters( $blogs );
+    mabs_display_letters($blogs);
 
     // add menu item for each blog
     $i = 1;
-    foreach ( $blogs as $key => $blog )
-    {
+    foreach ($blogs as $key => $blog) {
         $letter = mb_strtoupper(mb_substr($key, 0, 1));
         $site_parent = "mabs_".$letter."_letter";
-        $admin_url = !empty($blog->external_site) ? $blog->adminurl : mabs_get_admin_url( $blog->userblog_id );
+        $admin_url = !empty($blog->external_site) ? $blog->adminurl : mabs_get_admin_url($blog->userblog_id);
+        $href = !empty($blog->external_site) && $blog->external_site == 'network' ?
+            ($admin_url . 'network/') :
+            $admin_url;
 
         //Add the site
         $wp_admin_bar->add_menu(array(
             'parent' => $site_parent,
             'id' => 'mabs_'.$letter.$i,
             'title' => apply_filters('mabs_blog_name', $blog->blogname, $blog),
-            'href' => !empty($blog->external_site) && $blog->external_site == 'network' ? ($admin_url . 'network/') : $admin_url,
+            'href' => $href,
             'meta' => array(
                 'class' => 'mabs_blog',
                 'target' => !empty($blog->external_site) ? '_blank' : '',
@@ -340,15 +358,16 @@ function mabs_display_blogs_for_user( $user )
  *
  * @return void
  */
-function mabs_display_letters( array $blogs )
+function mabs_display_letters(array $blogs)
 {
     global $wp_admin_bar;
 
     $letters = array();
-    foreach ( $blogs as $key => $blog )
+    foreach ($blogs as $key => $blog) {
         $letters[ mb_strtoupper(mb_substr($key, 0, 1)) ] = '';
+    }
 
-    foreach ( array_keys($letters) as $letter )
+    foreach (array_keys($letters) as $letter) {
         $wp_admin_bar->add_menu(array(
             'parent' => 'mabs',
             'id' => 'mabs_'.$letter.'_letter',
@@ -357,6 +376,7 @@ function mabs_display_letters( array $blogs )
                 'class' => 'mabs_letter',
             ),
         ));
+    }
 }
 
 /**
@@ -379,25 +399,25 @@ function mabs_display_letters( array $blogs )
  *      )
  */
 $mabs_user_blog_list = array();
-function mabs_get_blog_list( $user )
+function mabs_get_blog_list($user)
 {
     global $wp_admin_bar;
     global $mabs_user_blog_list;
 
     // Only do this once
-    if ( !isset($mabs_user_blog_list[$user->ID]))
-    {
+    if (!isset($mabs_user_blog_list[$user->ID])) {
         // Try to retrieve sorted list from cache
         $cache = get_site_transient('mabs_bloglist_'.$user->ID);
-        if ( $cache )
+        if ($cache) {
             $sorted = $mabs_user_blog_list[$user->ID] = $cache;
+        }
 
-        if ( empty($mabs_user_blog_list[$user->ID]) )
-        {
-            if ( user_can($user, 'manage_network') )
+        if (empty($mabs_user_blog_list[$user->ID])) {
+            if (user_can($user, 'manage_network')) {
                 $unsorted_list = mabs_get_blogs_of_network();
-            else
-                $unsorted_list = mabs_get_blogs_of_user( $user->ID );
+            } else {
+                $unsorted_list = mabs_get_blogs_of_user($user->ID);
+            }
 
             $unsorted_list = apply_filters('mabs_unsorted_sites_list', $unsorted_list);
 
@@ -405,8 +425,9 @@ function mabs_get_blog_list( $user )
 
             // Add blogname to key list. Also add a number so we
             // are certain keys are unique
-            foreach ( $unsorted_list as $key => $blog )
+            foreach ($unsorted_list as $key => $blog) {
                 $sorted[ strtoupper($blog->blogname) . $key ] = $blog;
+            }
 
             ksort($sorted);
 
@@ -415,9 +436,9 @@ function mabs_get_blog_list( $user )
 
             $mabs_user_blog_list[$user->ID] = $sorted;
         }
-    }
-    else
+    } else {
         $sorted = $mabs_user_blog_list[$user->ID];
+    }
 
     return $sorted;
 }
@@ -425,8 +446,7 @@ function mabs_get_blog_list( $user )
 function mabs_get_blogs_of_user($user_id)
 {
     $cache = get_site_transient('mabs_user_blogs_'.$user_id);
-    if ( !$cache )
-    {
+    if (!$cache) {
         $cache = get_blogs_of_user($user_id);
         set_site_transient('mabs_user_blogs_'.$user_id, $cache, apply_filters('mabs_cache_duration', 60*60*30));
     }
@@ -451,14 +471,12 @@ function mabs_get_blogs_of_user($user_id)
 function mabs_get_blogs_of_network()
 {
     $cache = get_site_transient('mabs_bloglist_network');
-    if ( !$cache )
-    {
+    if (!$cache) {
         // This method returns different info than get_blogs_of_user(). So make it the same
         $blog_list = get_sites(array('number'=>9999));
         $unsorted_list = array();
 
-        foreach ( $blog_list as $id => $info )
-        {
+        foreach ($blog_list as $id => $info) {
             $userblog_id = intval($info->blog_id);
             $unsorted_list[$userblog_id] = mabs_convert_blog_fields($info);
         }
@@ -519,5 +537,3 @@ function mabs_convert_blog_fields($fields)
         'deleted' => intval($fields['deleted']),
     );
 }
-
-?>
